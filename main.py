@@ -6,14 +6,6 @@ from panel.io.pyodide import show
 from PyPDF2 import PdfReader
 import re
 
-MAX_SIZE_MB = 150
-
-pn.serve(
-    # Increase the maximum websocket message size allowed by Bokeh
-    websocket_max_message_size=MAX_SIZE_MB*1024*1014,
-    # Increase the maximum buffer size allowed by Tornado
-    http_server_kwargs={'max_buffer_size': MAX_SIZE_MB*1024*1014}
-)
 
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
