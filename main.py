@@ -11,7 +11,10 @@ import re
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
 text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy")
 button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=100)
-row = pn.Row(file_input, text_input, button_upload, height=75)
+checkbox = pn.widgets.Checkbox(name='Group by page')
+row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
+
+
 
 table = pn.widgets.Tabulator(pagination='remote', page_size=25, header_filters = False, hierarchical  = False, editors = {},show_index=False, selectable = True)
 document.getElementById('warning').style.display = 'none'
@@ -97,7 +100,10 @@ def process_file(event):
         df_final["keywords"].astype(str,copy=False)
 
         if df_final["keywords"].isin(words_of_interest).sum() != 0:
-            pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","page_number"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
+            if not checkbox.value:
+                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","page_number"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
+            else:
+                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
             pivot.columns = pivot.columns.droplevel(level=0)
             table.value = pivot.reset_index().astype(str)
             print(pivot)
@@ -111,6 +117,7 @@ button_upload.on_click(process_file)
 await show(row, 'fileinput')
 await show(row2, 'table')
 await show(row3, 'dl')
+
 
 
 def getDecodedText(reader, page_n):
