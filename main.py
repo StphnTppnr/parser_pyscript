@@ -6,7 +6,7 @@ from panel.io.pyodide import show
 from PyPDF2 import PdfReader
 import re
 import xlsxwriter
-# from _pyio import *
+from _pyio import *
 import io
 
 
