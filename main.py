@@ -5,25 +5,32 @@ import pandas as pd
 from panel.io.pyodide import show
 from PyPDF2 import PdfReader
 import re
-import io
 import xlsxwriter
+from _pyio import *
 
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
 text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy")
 button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=100)
-checkbox = pn.widgets.Checkbox(name='Group by page')
+checkbox = pn.widgets.Checkbox(name='Group by / show page')
 row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
 
-data = None
+
 
 def get_xlsx():
+    global data
+    print("get_xlsx here we go!")
     output = io.BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    print("DATA:")
+    print(data)
+    writer = pd.ExcelWriter(output,engine='xlsxwriter')
     data.to_excel(writer, sheet_name="Data")
     writer.save() # Important!
     output.seek(0) # Important!
     return output
+
+global data
+data = pd.DataFrame()
 
 file_download_xlsx = pn.widgets.FileDownload(filename="data.xlsx", callback=get_xlsx, button_type="primary")
 
@@ -41,7 +48,7 @@ row2 = pn.Row(
 )
 
 row3 = pn.Row(
-    pn.Column(filename, button),
+    # pn.Column(filename, button),
     file_download_xlsx
 )
 
@@ -118,10 +125,16 @@ def process_file(event):
                 pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","page_number"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
             else:
                 pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
+            
             pivot.columns = pivot.columns.droplevel(level=0)
             table.value = pivot.reset_index().astype(str)
-            data = pivot.reset_index().astype(str)
             print(pivot)
+
+            global data
+            data = pivot
+
+            document.getElementById("table").style.display ='inline'
+            document.getElementById("dl").style.display ='inline'
 
         else:
             document.getElementById('warning').textContent = 'No matches found'
@@ -132,6 +145,9 @@ button_upload.on_click(process_file)
 await show(row, 'fileinput')
 await show(row2, 'table')
 await show(row3, 'dl')
+
+document.getElementById("table").style.display ='none'
+document.getElementById("dl").style.display ='none'
 
 
 
