@@ -1,11 +1,12 @@
 import asyncio
 import panel as pn
 import pandas as pd
-import numpy as np
+#import numpy as np
 from panel.io.pyodide import show
 from PyPDF2 import PdfReader
 import re
-
+import io
+import xlsxwriter
 
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
@@ -14,6 +15,17 @@ button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=10
 checkbox = pn.widgets.Checkbox(name='Group by page')
 row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
 
+data = None
+
+def get_xlsx():
+    output = io.BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    data.to_excel(writer, sheet_name="Data")
+    writer.save() # Important!
+    output.seek(0) # Important!
+    return output
+
+file_download_xlsx = pn.widgets.FileDownload(filename="data.xlsx", callback=get_xlsx, button_type="primary")
 
 
 table = pn.widgets.Tabulator(pagination='remote', page_size=25, header_filters = False, hierarchical  = False, editors = {},show_index=False, selectable = True)
@@ -29,8 +41,10 @@ row2 = pn.Row(
 )
 
 row3 = pn.Row(
-    pn.Column(filename, button)
+    pn.Column(filename, button),
+    file_download_xlsx
 )
+
 
 
 def process_file(event):
@@ -106,6 +120,7 @@ def process_file(event):
                 pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
             pivot.columns = pivot.columns.droplevel(level=0)
             table.value = pivot.reset_index().astype(str)
+            data = pivot.reset_index().astype(str)
             print(pivot)
 
         else:
