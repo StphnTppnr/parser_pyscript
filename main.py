@@ -7,7 +7,7 @@ from PyPDF2 import PdfReader
 import re
 import xlsxwriter
 from _pyio import *
-import io
+#import io
 
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
