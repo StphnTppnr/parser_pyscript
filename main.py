@@ -13,7 +13,7 @@ from _pyio import *
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
 text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy")
 button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=100)
-checkbox = pn.widgets.Checkbox(name='Group by / show page')
+checkbox = pn.widgets.Checkbox(name='Group by / aggregate pages', width = 100)
 row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
 
 
