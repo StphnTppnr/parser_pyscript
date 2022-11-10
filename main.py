@@ -6,7 +6,8 @@ from panel.io.pyodide import show
 from PyPDF2 import PdfReader
 import re
 import xlsxwriter
-from _pyio import *
+# from _pyio import *
+import io
 
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
