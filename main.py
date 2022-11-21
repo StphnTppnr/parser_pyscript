@@ -22,10 +22,10 @@ row = pn.Column(pn.Row(file_input, text_input),
 
 def get_xlsx():
     global data
-    print("get_xlsx here we go!")
+    #print("get_xlsx here we go!")
     output = io.BytesIO()
-    print("DATA:")
-    print(data)
+    #print("DATA:")
+    #print(data)
     writer = pd.ExcelWriter(output,engine='xlsxwriter')
     data.to_excel(writer, sheet_name="Data")
     writer.save() # Important!
@@ -82,11 +82,12 @@ def process_file(event):
 
     if file_input.value is not None:
         words_of_interest = pd.Series(text_input.value.lower().split(";"))
-        print(words_of_interest)
+        #print(words_of_interest)
         file_n = 0
         for f in file_input.value:
             reader = PdfReader(io.BytesIO(f))
             count = 0
+            email_found = ""
             for page_n in range(0,reader.getNumPages()):
                 count += 1 #used to label the page number
 
@@ -97,12 +98,12 @@ def process_file(event):
 
                 keywords = parseMultiWordSearch(text_decoded, words_of_interest, keywords)
 
-                email_found = ""
+                
                 #Test to extract emails
                 email = re.findall(r'([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})',text_decoded)
                 if email: #if an email was found, add it to the emails list
                     email_found = str(email[0][0])+"@"+str(email[0][1])+"."+str(email[0][2])
-
+                
                 #Create dataframe with the keywords
                 df = pd.DataFrame(list(set(keywords)),columns=['keywords'])
 
@@ -129,18 +130,18 @@ def process_file(event):
                 #table.value = df
                 #document.getElementById('table').style.display = 'block'
         #Assemble lists to create the final data frame and save it as a csv
-        df_final = pd.DataFrame(list(zip(l_docName, l_email, l_page,l_keywords,l_number_of_times_word_appeared)), columns = ["docName","email","page_number","keywords","frequency_abs"])
+        df_final = pd.DataFrame(list(zip(l_docName, l_email, l_page,l_keywords,l_number_of_times_word_appeared)), columns = ["docName","email_found","page_number","keywords","frequency_abs"])
 
         #Create Pivot Table with words of interest
         df_final["page_number"].astype(int,copy=False)
         df_final["keywords"].astype(str,copy=False)
-        df_final["email"].astype(str,copy=False)
+        df_final["email_found"].astype(str,copy=False)
 
         if df_final["keywords"].isin(words_of_interest).sum() != 0:
             if not checkbox.value:
-                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","page_number"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
+                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","email_found","page_number"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
             else:
-                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
+                pivot = df_final[df_final["keywords"].isin(words_of_interest)].pivot_table(index=["docName","email_found"],columns="keywords",fill_value=0,sort=False,margins=[True,False],aggfunc="sum").iloc[:-1,:].sort_values(by=("frequency_abs","All"),ascending=False)
             
             pivot.columns = pivot.columns.droplevel(level=0)
             table.value = pivot.reset_index().astype(str)
