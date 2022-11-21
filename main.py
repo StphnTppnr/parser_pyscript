@@ -12,7 +12,7 @@ from _pyio import *
 
 file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=200,sizing_mode = 'fixed')
 text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy", sizing_mode = 'stretch_width')
-button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=100)
+button_upload = pn.widgets.Button(name='Parse', button_type='primary', width=100)
 checkbox = pn.widgets.Checkbox(name='Aggregate pages', width = 150)
 
 #row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
@@ -76,6 +76,9 @@ def process_file(event):
     daniel = ["automation","consulting","ai","artificial intelligence","machine learning","strategy"]
     dominik = ["consulting", "governance", "steering", "project management", "program management", "PMO"]
     #words_of_interest = pd.Series(dominik)
+
+    # List of languages of interest:
+    languages = ["english", "englisch", "german", "deutsch"]
 
     if file_input.value is not None:
         words_of_interest = pd.Series(text_input.value.lower().split(";"))
