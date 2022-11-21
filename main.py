@@ -10,13 +10,15 @@ from _pyio import *
 #import io
 
 
-file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=180)
-text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy")
+file_input = pn.widgets.FileInput(accept='.pdf', multiple = True, width=200,sizing_mode = 'fixed')
+text_input = pn.widgets.TextInput(placeholder='Enter; your; keywords; seperated by; semicolon', value = "automation;consulting;ai;artificial intelligence;machine learning;strategy", sizing_mode = 'stretch_width')
 button_upload = pn.widgets.Button(name='Upload', button_type='primary', width=100)
-checkbox = pn.widgets.Checkbox(name='Group by / aggregate pages', width = 100)
-row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
+checkbox = pn.widgets.Checkbox(name='Aggregate pages', width = 150)
 
+#row = pn.Row(file_input, text_input, checkbox, button_upload, height=75)
 
+row = pn.Column(pn.Row(file_input, text_input),
+          pn.Row(checkbox, button_upload), sizing_mode = 'stretch_width')
 
 def get_xlsx():
     global data
@@ -64,6 +66,7 @@ def process_file(event):
     l_frequency = []
     l_page = []
     l_docName = []
+    l_email = []
     l_docname_filtered = []
 
     l_page_filtered = []
@@ -91,12 +94,19 @@ def process_file(event):
 
                 keywords = parseMultiWordSearch(text_decoded, words_of_interest, keywords)
 
+                email_found = ""
+                #Test to extract emails
+                email = re.findall(r'([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})',text_decoded)
+                if email: #if an email was found, add it to the emails list
+                    email_found = str(email[0][0])+"@"+str(email[0][1])+"."+str(email[0][2])
+
                 #Create dataframe with the keywords
                 df = pd.DataFrame(list(set(keywords)),columns=['keywords'])
 
                 #Add the absolute frequency and the page number
                 df['number_of_times_word_appeared'] = df['keywords'].apply(lambda x: weightage(x,text_decoded))
                 df["page"] = str(count)
+                df["email"] = email_found
                 df["docName"] = re.findall(r'[^\/]+?pdf$',file_input.filename[file_n])[0]
 
                 #Extract the data into lists to create the overall extract
@@ -104,6 +114,7 @@ def process_file(event):
                 l_keywords.extend(df['keywords'].tolist())
                 l_page.extend(df['page'].tolist())
                 l_docName.extend(df["docName"].tolist())
+                l_email.extend(df["email"].tolist())
 
                 #Create additional extract lists for the words of interest
                 for word in words_of_interest:
@@ -115,11 +126,12 @@ def process_file(event):
                 #table.value = df
                 #document.getElementById('table').style.display = 'block'
         #Assemble lists to create the final data frame and save it as a csv
-        df_final = pd.DataFrame(list(zip(l_docName, l_page,l_keywords,l_number_of_times_word_appeared)), columns = ["docName","page_number","keywords","frequency_abs"])
+        df_final = pd.DataFrame(list(zip(l_docName, l_email, l_page,l_keywords,l_number_of_times_word_appeared)), columns = ["docName","email","page_number","keywords","frequency_abs"])
 
         #Create Pivot Table with words of interest
         df_final["page_number"].astype(int,copy=False)
         df_final["keywords"].astype(str,copy=False)
+        df_final["email"].astype(str,copy=False)
 
         if df_final["keywords"].isin(words_of_interest).sum() != 0:
             if not checkbox.value:
